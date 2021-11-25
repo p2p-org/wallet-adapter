@@ -58,7 +58,7 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
         try {
             this.publicKey = new PublicKey(await this.channel.connect())
         } catch (e) {
-            throw new WalletAccountError(e)
+            throw new WalletAccountError(undefined, e)
         }
 
         return Promise.resolve(undefined);

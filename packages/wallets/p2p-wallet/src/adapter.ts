@@ -56,7 +56,7 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
             try {
                 await wallet.connect()
             } catch (e) {
-                throw new WalletAccountError(e?.message, e);
+                throw new WalletAccountError(undefined, e);
             }
             this.emit('connect');
         } catch (error: any) {
