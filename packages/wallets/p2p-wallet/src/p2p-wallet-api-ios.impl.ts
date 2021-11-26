@@ -14,15 +14,23 @@ interface RawChannel {
     postMessage<T>(args: any): Promise<T>
 }
 
-class Channel {
-    private rawChannel: RawChannel
+interface Message {
+    method: string
+    args: any
+}
 
-    constructor(rawChannel: RawChannel) {
-        this.rawChannel = rawChannel
+class Channel {
+    private getRawChannel(): RawChannel {
+        // @ts-ignore
+        return window.webkit.messageHandlers.P2PWalletApi
     }
 
     connect(): Promise<string> {
-        return this.rawChannel.postMessage<string>(null)
+        const message: Message = {
+            method: 'connect',
+            args: null,
+        }
+        return this.getRawChannel().postMessage<string>(message)
     }
 
     /**
@@ -31,7 +39,11 @@ class Channel {
      * @return Signature
      */
     signTransaction(transaction: Transaction): Promise<string> {
-        return this.rawChannel.postMessage<string>(transaction)
+        const message: Message = {
+            method: 'signTransaction',
+            args: transaction,
+        }
+        return this.getRawChannel().postMessage<string>(message)
     }
 
     /**
@@ -40,7 +52,11 @@ class Channel {
      * @return Signature
      */
     signTransactions(transactions: Transaction[]): Promise<string[]> {
-        return this.rawChannel.postMessage<string[]>(transactions)
+        const message: Message = {
+            method: 'signTransactions',
+            args: transactions,
+        }
+        return this.getRawChannel().postMessage<string[]>(message)
     }
 }
 
@@ -50,8 +66,7 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
 
     constructor() {
         // @ts-ignore
-        const rawChannel = window.webkit.messageHandlers.P2PWalletApi
-        this.channel = new Channel(rawChannel)
+        this.channel = new Channel()
     }
 
     async connect(): Promise<void> {

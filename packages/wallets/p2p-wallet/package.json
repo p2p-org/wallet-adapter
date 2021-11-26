@@ -19,7 +19,7 @@
     },
     "scripts": {
         "clean": "shx rm -rf lib/*",
-        "build": "yarn clean && tsc"
+        "build": "tsc"
     },
     "peerDependencies": {
         "@solana/wallet-adapter-base": "^0.7.0",

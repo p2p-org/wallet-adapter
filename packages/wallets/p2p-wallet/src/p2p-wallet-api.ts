@@ -35,14 +35,14 @@ export interface P2PWalletApi {
     signAllTransactions(transaction: Transaction[]): Promise<string[]>
 }
 
+declare const window: P2PWindow;
+
 export interface P2PWindow extends Window {
     p2pTarget?: string
     p2pWallet?: P2PWalletApi
 }
 
-export declare const window: P2PWindow;
-
-export function setupP2PApi() {
+export function setupP2PApi(): P2PWalletApi {
     window.p2pWallet = undefined
 
     const target = window.p2pTarget
@@ -56,4 +56,6 @@ export function setupP2PApi() {
         default:
             window.p2pWallet = new P2PWalletApiWebImpl()
     }
+
+    return window.p2pWallet
 }

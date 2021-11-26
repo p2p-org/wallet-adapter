@@ -7,7 +7,7 @@ import {
     WalletSignTransactionError,
 } from '@solana/wallet-adapter-base';
 import {PublicKey, Transaction} from '@solana/web3.js';
-import {P2PWalletApi, setupP2PApi, window} from "./p2p-wallet-api";
+import {P2PWalletApi, setupP2PApi} from "./p2p-wallet-api";
 
 export interface P2PConfiguration {
     pollInterval?: number;
@@ -20,9 +20,8 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
 
     constructor(config: P2PConfiguration = {}) {
         super();
-        this._p2pWallet = null;
 
-        setupP2PApi()
+        this._p2pWallet = setupP2PApi()
         if (!this.ready) pollUntilReady(this, config.pollInterval || 1000, config.pollCount || 3);
     }
 
@@ -33,7 +32,7 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
     }
 
     get ready(): boolean {
-        return typeof window !== 'undefined' && !!window.p2pWallet != null;
+        return this._p2pWallet != null;
     }
 
     get connecting(): boolean {
@@ -49,7 +48,7 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
             if (this.connected || this.connecting) return;
             this._connecting = true;
 
-            const wallet = window.p2pWallet;
+            const wallet = this._p2pWallet;
             if (!wallet) throw new WalletNotFoundError();
             this._p2pWallet = wallet
 
