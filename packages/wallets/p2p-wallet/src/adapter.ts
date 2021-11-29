@@ -3,11 +3,10 @@ import {
     pollUntilReady,
     WalletAccountError,
     WalletNotConnectedError,
-    WalletNotFoundError,
     WalletSignTransactionError,
 } from '@solana/wallet-adapter-base';
 import {PublicKey, Transaction} from '@solana/web3.js';
-import {P2PWalletApi, setupP2PApi} from "./p2p-wallet-api";
+import {initP2PWalletApi, isP2PWalletReady, P2PWalletApi} from "./p2p-wallet-api";
 
 export interface P2PConfiguration {
     pollInterval?: number;
@@ -15,13 +14,11 @@ export interface P2PConfiguration {
 }
 
 export class P2PWalletAdapter extends BaseSignerWalletAdapter {
-    private _p2pWallet: P2PWalletApi | null;
+    private _p2pWallet: P2PWalletApi | null = null;
     private _connecting: boolean = false
 
     constructor(config: P2PConfiguration = {}) {
         super();
-
-        this._p2pWallet = setupP2PApi()
         if (!this.ready) pollUntilReady(this, config.pollInterval || 1000, config.pollCount || 3);
     }
 
@@ -32,7 +29,7 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
     }
 
     get ready(): boolean {
-        return this._p2pWallet != null;
+        return isP2PWalletReady()
     }
 
     get connecting(): boolean {
@@ -40,7 +37,8 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
     }
 
     get connected(): boolean {
-        return !!this._p2pWallet?.getPublicKey();
+        console.log(this._p2pWallet?.getPublicKey())
+        return this._p2pWallet?.getPublicKey() != null;
     }
 
     async connect(): Promise<void> {
@@ -48,18 +46,20 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
             if (this.connected || this.connecting) return;
             this._connecting = true;
 
-            const wallet = this._p2pWallet;
-            if (!wallet) throw new WalletNotFoundError();
-            this._p2pWallet = wallet
+            // Init p2p wallet api
+            this._p2pWallet = initP2PWalletApi();
 
+            // Connect to wallet
             try {
-                await wallet.connect()
+                await this._p2pWallet.connect()
             } catch (e) {
                 throw new WalletAccountError(undefined, e);
             }
+
             this.emit('connect');
         } catch (error: any) {
             this.emit('error', error);
+            this.emit('disconnect');
             throw error;
         } finally {
             this._connecting = false;

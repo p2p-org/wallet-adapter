@@ -71,16 +71,17 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
 
     async connect(): Promise<void> {
         try {
+            console.log("Connecting");
             this.publicKey = new PublicKey(await this.channel.connect())
+            console.log(new PublicKey(await this.channel.connect()));
         } catch (e) {
+            console.log("Connect error");
             throw new WalletAccountError(undefined, e)
         }
-
-        return Promise.resolve(undefined);
     }
 
-    disconnect(): Promise<void> {
-        return Promise.resolve(undefined);
+    async disconnect(): Promise<void> {
+        this.publicKey = null
     }
 
     getPublicKey(): PublicKey | null {
@@ -101,5 +102,13 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
         }
 
         return this.channel.signTransaction(transaction)
+    }
+
+    static isReady(): boolean {
+        // @ts-ignore
+        console.log(window.webkit.messageHandlers.P2PWalletApi != null)
+
+        // @ts-ignore
+        return window.webkit.messageHandlers.P2PWalletApi != null
     }
 }
