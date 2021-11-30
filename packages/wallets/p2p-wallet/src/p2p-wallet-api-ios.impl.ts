@@ -1,36 +1,87 @@
 import {PublicKey, Transaction} from "@solana/web3.js";
 import {P2PWalletApi} from "./p2p-wallet-api";
 import {WalletAccountError, WalletNotConnectedError} from "@solana/wallet-adapter-base";
+import {v4 as uuid} from 'uuid';
 
 /**
- * Use to describe a return value in [Channel.postMessage].
+ * Expose the window
  */
-type Void = null
+interface P2PWindow extends Window {
+    webkit?: {
+        messageHandlers: {
+            P2PWalletIncomingChannel: IncomingChannel
+            P2PWalletOutgoingChannel: OutgoingChannel
+        }
+    }
+    p2pWallet?: P2PWalletApi
+}
 
 /**
  * Expose channel between iOS and browser
  */
-interface RawChannel {
-    postMessage<T>(args: any): Promise<T>
+interface IncomingChannel {
+    postMessage(args: any): void
+}
+
+interface OutgoingChannel {
+    accept(message: Message): void
 }
 
 interface Message {
-    method: string
+    id: string
+    method: string | undefined
     args: any
 }
 
-class Channel {
-    private getRawChannel(): RawChannel {
-        // @ts-ignore
-        return window.webkit.messageHandlers.P2PWalletApi
+export class Completer<T> {
+    public readonly promise: Promise<T>;
+    public complete!: (value: (PromiseLike<T> | T)) => void;
+    public reject!: (reason?: any) => void;
+    public readonly timeoutId: ReturnType<typeof setTimeout>
+
+    public constructor(onTimeout: (completer: Completer<T>) => void, timeout: number = 60) {
+        this.promise = new Promise<T>((resolve, reject) => {
+            this.complete = resolve;
+            this.reject = reject;
+        })
+        this.timeoutId = setTimeout(() => onTimeout(this), timeout * 1000)
     }
 
-    connect(): Promise<string> {
+    close() {
+        clearTimeout(this.timeoutId)
+    }
+}
+
+class Channel {
+    private dispatchCenter: Map<string, Completer<any>> = new Map<string, Completer<any>>()
+
+    private get outgoingChannel(): IncomingChannel {
+        return (window as P2PWindow).webkit!.messageHandlers.P2PWalletIncomingChannel
+    }
+
+    constructor() {
+        (window as P2PWindow).webkit!.messageHandlers.P2PWalletOutgoingChannel.accept = this.accept
+    }
+
+    private call<T>(method: string, data: any): Promise<T> {
         const message: Message = {
+            id: uuid(),
             method: 'connect',
             args: null,
         }
-        return this.getRawChannel().postMessage<string>(message)
+
+        const completer = new Completer<T>((completer) => {
+            completer.reject("Timeout")
+            this.dispatchCenter.delete(message.id)
+        })
+
+        this.dispatchCenter.set(message.id, completer)
+        this.outgoingChannel.postMessage(message)
+        return completer.promise
+    }
+
+    connect(): Promise<string> {
+        return this.call<string>('connect', null)
     }
 
     /**
@@ -39,11 +90,7 @@ class Channel {
      * @return Signature
      */
     signTransaction(transaction: Transaction): Promise<string> {
-        const message: Message = {
-            method: 'signTransaction',
-            args: transaction,
-        }
-        return this.getRawChannel().postMessage<string>(message)
+        return this.call<string>('signTransaction', transaction)
     }
 
     /**
@@ -52,11 +99,25 @@ class Channel {
      * @return Signature
      */
     signTransactions(transactions: Transaction[]): Promise<string[]> {
-        const message: Message = {
-            method: 'signTransactions',
-            args: transactions,
+        return this.call<string[]>('signTransactions', transactions)
+    }
+
+    /**
+     * Incoming message from iOS will be handled here.
+     * @param message
+     */
+    accept(message: Message) {
+        const completer = this.dispatchCenter.get(message.id)
+        if (completer == null) return
+
+        if (message.method == 'error') {
+            completer.reject(message.args)
+        } else {
+            completer.complete(message.args)
         }
-        return this.getRawChannel().postMessage<string[]>(message)
+
+        completer.close()
+        this.dispatchCenter.delete(message.id)
     }
 }
 
