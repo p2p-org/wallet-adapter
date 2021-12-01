@@ -65,12 +65,10 @@ class Channel {
     }
 
     private call<T>(method: string, data: any): Promise<T> {
-        console.log("Sending: " + method)
-
         const message: Message = {
             id: uuid(),
-            method: 'connect',
-            args: null,
+            method: method,
+            args: data,
         }
 
         const completer = new Completer<T>((completer) => {
@@ -106,9 +104,6 @@ class Channel {
     }
 
     private _accept(data: string) {
-        console.trace()
-        console.log("RECEIVE: " + data)
-        console.log(atob(data))
         this.handle(JSON.parse(atob(data)))
     }
 
@@ -117,8 +112,6 @@ class Channel {
      * @param message
      */
     handle(message: Message) {
-        console.log(message)
-
         const completer = this.dispatchCenter.get(message.id)
         if (completer == null) return
 
@@ -179,7 +172,6 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
 
     static isReady(): boolean {
         const _window = window as P2PWindow
-        console.log("READY: " + _window.webkit?.messageHandlers.P2PWalletIncomingChannel != null)
         return _window.webkit?.messageHandlers.P2PWalletIncomingChannel != null;
     }
 }
