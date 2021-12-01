@@ -10,10 +10,9 @@ interface P2PWindow extends Window {
     webkit?: {
         messageHandlers: {
             P2PWalletIncomingChannel: IncomingChannel
-            P2PWalletOutgoingChannel: OutgoingChannel
         }
     }
-    p2pWallet?: P2PWalletApi
+    P2PWalletOutgoingChannel?: OutgoingChannel
 }
 
 /**
@@ -24,7 +23,7 @@ interface IncomingChannel {
 }
 
 interface OutgoingChannel {
-    accept(message: Message): void
+    accept(data: string): void
 }
 
 interface Message {
@@ -55,15 +54,19 @@ export class Completer<T> {
 class Channel {
     private dispatchCenter: Map<string, Completer<any>> = new Map<string, Completer<any>>()
 
-    private get outgoingChannel(): IncomingChannel {
+    private outgoingChannel(): IncomingChannel {
         return (window as P2PWindow).webkit!.messageHandlers.P2PWalletIncomingChannel
     }
 
     constructor() {
-        (window as P2PWindow).webkit!.messageHandlers.P2PWalletOutgoingChannel.accept = this.accept
+        (window as P2PWindow).P2PWalletOutgoingChannel = {
+            accept: (message: string) => this._accept(message)
+        }
     }
 
     private call<T>(method: string, data: any): Promise<T> {
+        console.log("Sending: " + method)
+
         const message: Message = {
             id: uuid(),
             method: 'connect',
@@ -76,7 +79,7 @@ class Channel {
         })
 
         this.dispatchCenter.set(message.id, completer)
-        this.outgoingChannel.postMessage(message)
+        this.outgoingChannel().postMessage(message)
         return completer.promise
     }
 
@@ -102,11 +105,20 @@ class Channel {
         return this.call<string[]>('signTransactions', transactions)
     }
 
+    private _accept(data: string) {
+        console.trace()
+        console.log("RECEIVE: " + data)
+        console.log(atob(data))
+        this.handle(JSON.parse(atob(data)))
+    }
+
     /**
      * Incoming message from iOS will be handled here.
      * @param message
      */
-    accept(message: Message) {
+    handle(message: Message) {
+        console.log(message)
+
         const completer = this.dispatchCenter.get(message.id)
         if (completer == null) return
 
@@ -162,14 +174,12 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
             throw new WalletNotConnectedError();
         }
 
-        return this.channel.signTransaction(transaction)
+        return this.channel.signTransaction(transaction);
     }
 
     static isReady(): boolean {
-        // @ts-ignore
-        console.log(window.webkit.messageHandlers.P2PWalletApi != null)
-
-        // @ts-ignore
-        return window.webkit.messageHandlers.P2PWalletApi != null
+        const _window = window as P2PWindow
+        console.log("READY: " + _window.webkit?.messageHandlers.P2PWalletIncomingChannel != null)
+        return _window.webkit?.messageHandlers.P2PWalletIncomingChannel != null;
     }
 }
