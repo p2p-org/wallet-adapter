@@ -90,8 +90,9 @@ class Channel {
      * @param transaction The transaction, that will be signed
      * @return Signature
      */
-    signTransaction(transaction: Transaction): Promise<string> {
-        return this.call<string>('signTransaction', transaction)
+    signTransaction(transaction: Transaction): Promise<Transaction> {
+        return this.call<string>('signTransaction', transaction.serialize({verifySignatures: false}).toString("base64"))
+            .then((result) => Transaction.from(Buffer.from(result, "base64")))
     }
 
     /**
@@ -99,8 +100,9 @@ class Channel {
      * @param transactions The list of transaction, that will be signed
      * @return Signature
      */
-    signTransactions(transactions: Transaction[]): Promise<string[]> {
-        return this.call<string[]>('signTransactions', transactions)
+    signTransactions(transactions: Transaction[]): Promise<Transaction[]> {
+        return this.call<string[]>('signTransactions', transactions.map((e) => e.serialize().toString("base64")))
+            .then((result) => result.map((data) => Transaction.from(Buffer.from(data, "base64"))))
     }
 
     private _accept(data: string) {
@@ -131,17 +133,13 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
     public publicKey: PublicKey | null = null
 
     constructor() {
-        // @ts-ignore
         this.channel = new Channel()
     }
 
     async connect(): Promise<void> {
         try {
-            console.log("Connecting");
             this.publicKey = new PublicKey(await this.channel.connect())
-            console.log(new PublicKey(await this.channel.connect()));
         } catch (e) {
-            console.log("Connect error");
             throw new WalletAccountError(undefined, e)
         }
     }
@@ -154,7 +152,7 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
         return this.publicKey
     }
 
-    signAllTransactions(transactions: Transaction[]): Promise<string[]> {
+    signAllTransactions(transactions: Transaction[]): Promise<Transaction[]> {
         if (!this.publicKey) {
             throw new WalletNotConnectedError();
         }
@@ -162,13 +160,14 @@ export class P2PWalletApiIosImpl implements P2PWalletApi {
         return this.channel.signTransactions(transactions)
     }
 
-    signTransaction(transaction: Transaction): Promise<string> {
+    signTransaction(transaction: Transaction): Promise<Transaction> {
         if (!this.publicKey) {
             throw new WalletNotConnectedError();
         }
 
         return this.channel.signTransaction(transaction);
     }
+
 
     static isReady(): boolean {
         const _window = window as P2PWindow

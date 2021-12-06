@@ -24,13 +24,13 @@ export interface P2PWalletApi {
      * Sign the requested transaction.
      * @param transaction
      */
-    signTransaction(transaction: Transaction): Promise<string>
+    signTransaction(transaction: Transaction): Promise<Transaction>
 
     /**
      * Sign the requested transactions.
      * @param transaction
      */
-    signAllTransactions(transaction: Transaction[]): Promise<string[]>
+    signAllTransactions(transaction: Transaction[]): Promise<Transaction[]>
 }
 
 declare const window: P2PWindow;

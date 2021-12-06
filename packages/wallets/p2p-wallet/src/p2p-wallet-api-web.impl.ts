@@ -14,11 +14,11 @@ export class P2PWalletApiWebImpl implements P2PWalletApi {
         return null;
     }
 
-    signAllTransactions(transaction: Transaction[]): Promise<string[]> {
-        return Promise.resolve([]);
+    signAllTransactions(transaction: Transaction[]): Promise<Transaction[]> {
+        return Promise.reject("Unimplemented");
     }
 
-    signTransaction(transaction: Transaction): Promise<string> {
-        return Promise.resolve("");
+    signTransaction(transaction: Transaction): Promise<Transaction> {
+        return Promise.reject("Unimplemented");
     }
 }

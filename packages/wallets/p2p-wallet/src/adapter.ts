@@ -37,7 +37,6 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
     }
 
     get connected(): boolean {
-        console.log(this._p2pWallet?.getPublicKey())
         return this._p2pWallet?.getPublicKey() != null;
     }
 
@@ -80,9 +79,7 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
             if (!wallet) throw new WalletNotConnectedError();
 
             try {
-                const sign = await wallet.signTransaction(transaction);
-                transaction.addSignature(new PublicKey(wallet.getPublicKey()!), new Buffer(sign))
-                return transaction
+                return wallet.signTransaction(transaction)
             } catch (error: any) {
                 throw new WalletSignTransactionError(error?.message, error);
             }
@@ -98,10 +95,7 @@ export class P2PWalletAdapter extends BaseSignerWalletAdapter {
             if (!wallet) throw new WalletNotConnectedError();
 
             try {
-                (await wallet.signAllTransactions(transactions)).forEach((sign, index) => {
-                    transactions[index].addSignature(new PublicKey(wallet.getPublicKey()!), new Buffer(sign))
-                })
-                return transactions
+                return wallet.signAllTransactions(transactions)
             } catch (error: any) {
                 throw new WalletSignTransactionError(error?.message, error);
             }
