@@ -19,9 +19,7 @@
     rxjs "6.6.7"
 
 "@angular-devkit/build-angular@^12.2.3":
-  version "12.2.12"
-  resolved "https://registry.yarnpkg.com/@angular-devkit/build-angular/-/build-angular-12.2.12.tgz#87f53514f293e1788a80fadcd9fa96bd57127e69"
-  integrity sha512-e2Q77KQk7KjIA9Rvih89acug7Hc98BoD8/RGKPuj4NcdlzoBfjF05ThwRTKFQPs/grWvyuIujVEsQL/PuG3oBg==
+  version "12.2.18"
   dependencies:
     "@ampproject/remapping" "1.0.1"
     "@angular-devkit/architect" "0.1202.12"
@@ -134,9 +132,7 @@
     rxjs "6.6.7"
 
 "@angular/cli@^12.2.3":
-  version "12.2.12"
-  resolved "https://registry.yarnpkg.com/@angular/cli/-/cli-12.2.12.tgz#ce4eeb8889eecb51a1a2af4fb69d3d2ce11728dd"
-  integrity sha512-69M5lrXuHKBkPne8h1v1Mgl9aJZhc+jamU7iZjQhlIt8xL1pTGr/y9/4S+sX1gKEGhd6p/82KwJ1CFcm/Kjhfg==
+  version "12.2.18"
   dependencies:
     "@angular-devkit/architect" "0.1202.12"
     "@angular-devkit/core" "12.2.12"
