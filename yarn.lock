@@ -3336,9 +3336,7 @@
     "@solana/wallet-adapter-torus" "^0.7.1"
 
 "@solana/web3.js@^1.20.0", "@solana/web3.js@^1.22.0", "@solana/web3.js@^1.29.2":
-  version "1.30.2"
-  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.30.2.tgz#e85da75e0825dc64f53eb64a1ff0115b27bec135"
-  integrity sha512-hznCj+rkfvM5taRP3Z+l5lumB7IQnDrB4l55Wpsg4kDU9Zds8pE5YOH5Z9bbF/pUzZJKQjyBjnY/6kScBm3Ugg==
+  version "1.30.3"
   dependencies:
     "@babel/runtime" "^7.12.5"
     "@ethersproject/sha2" "^5.5.0"
